@@ -1,1 +1,1 @@
-# gentoo
+# gentoo overlay
