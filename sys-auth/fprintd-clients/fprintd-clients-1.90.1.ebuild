@@ -54,6 +54,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-1.90.1-add-meson-build-libsystemd-test.patch"
 	"${FILESDIR}/${PN}-1.90.1-add-meson-options-libsystemd-test.patch"
 	"${FILESDIR}/${PN}-1.90.1-fix-file-collisions.patch" # fix file collisions
+	"${FILESDIR}/${PN}-1.90.1-fix-meson-positional-args.patch"
 )
 
 S="${WORKDIR}/fprintd-${EGIT_COMMIT}"
