@@ -26,11 +26,3 @@ src_install() {
 	dobin screencaster
 }
 
-pkg_setup() {
-	if use vaapi; then
-		EGIT_BRANCH="vaapi"
-	else
-		EGIT_BRANCH="master"
-	fi
-}
-
