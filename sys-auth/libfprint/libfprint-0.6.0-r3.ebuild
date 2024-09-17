@@ -2,14 +2,15 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI=6
+EAPI=8
 
-inherit autotools eutils udev vcs-snapshot
+inherit autotools udev vcs-snapshot
 
 MY_PV="V_${PV//./_}"
 DESCRIPTION="library to add support for consumer fingerprint readers"
 HOMEPAGE="https://cgit.freedesktop.org/libfprint/libfprint/"
-SRC_URI="https://cgit.freedesktop.org/${PN}/${PN}/snapshot/${MY_PV}.tar.bz2 -> ${P}.tar.bz2"
+#SRC_URI="https://cgit.freedesktop.org/${PN}/${PN}/snapshot/${MY_PV}.tar.bz2 -> ${P}.tar.bz2"
+SRC_URI="https://gitlab.freedesktop.org/libfprint/libfprint/-/archive/${MY_PV}/libfprint-${MY_PV}.tar.bz2 -> ${P}.tar.bz2"
 
 LICENSE="LGPL-2.1"
 SLOT="0"
@@ -19,9 +20,12 @@ IUSE="debug static-libs vanilla"
 RDEPEND="virtual/libusb:1
 	dev-libs/glib:2
 	dev-libs/nss
-	x11-libs/pixman"
+	x11-libs/pixman
+"
 DEPEND="${RDEPEND}
-	virtual/pkgconfig"
+	virtual/pkgconfig
+	dev-libs/libusb-compat
+"
 
 src_prepare() {
 	if ! use vanilla ; then
