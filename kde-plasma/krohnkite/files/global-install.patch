@@ -1,0 +1,30 @@
+diff -urN krohnkite.old/Makefile krohnkite/Makefile
+--- krohnkite.old/Makefile	2024-10-24 01:21:20.676460726 +0200
++++ krohnkite/Makefile	2024-10-24 02:08:55.447889617 +0200
+@@ -1,6 +1,6 @@
+ PROJECT_NAME = krohnkite
+ PROJECT_VER  = 0.9.8.3
+-PROJECT_REV  = $(shell git rev-parse HEAD | cut -b-7)
++PROJECT_REV  = ebuild
+ 
+ KWINPKG_FILE = $(PROJECT_NAME)-$(PROJECT_VER).kwinscript
+ KWINPKG_DIR  = pkg
+@@ -19,9 +19,7 @@
+ 	@rm -vf $(NODE_FILES)
+ 
+ install: package
+-	kpackagetool6 -t KWin/Script -s $(PROJECT_NAME) \
+-		&& kpackagetool6 -t KWin/Script -u $(KWINPKG_FILE) \
+-		|| kpackagetool6 -t KWin/Script -i $(KWINPKG_FILE)
++	kpackagetool6 -g -p $(DESTDIR) -t KWin/Script -i $(KWINPKG_FILE)
+ 
+ uninstall:
+ 	kpackagetool6 -t kwinscript -r $(PROJECT_NAME)
+@@ -76,7 +74,6 @@
+ 	@cp -v $< $@
+ 
+ $(NODE_SCRIPT): $(SRC)
+-	npm install --save-dev
+ 	npm run tsc --
+ 
+ package_json: package.json
