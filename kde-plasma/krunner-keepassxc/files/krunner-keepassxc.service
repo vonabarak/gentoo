@@ -1,0 +1,13 @@
+[Unit]
+Description=krunner-keepassxc python service
+After=plasma-workspace.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/libexec/krunner-keepassxc/runner
+Restart=on-failure
+TimeoutSec=10sec
+
+[Install]
+WantedBy=graphical-session.target
+
