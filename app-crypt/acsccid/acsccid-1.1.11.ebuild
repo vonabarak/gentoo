@@ -5,7 +5,7 @@ EAPI=8
 
 DESCRIPTION="Driver for ACS CCID smart card readers"
 HOMEPAGE="https://github.com/acshk/acsccid"
-SRC_URI="https://github.com/acshk/acsccid/archive/refs/tags/v${PV}.tar.gz"
+SRC_URI="https://github.com/acshk/acsccid/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"

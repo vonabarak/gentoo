@@ -16,7 +16,7 @@ diff -urN krohnkite.old/Makefile krohnkite/Makefile
 -	kpackagetool6 -t KWin/Script -s $(PROJECT_NAME) \
 -		&& kpackagetool6 -t KWin/Script -u $(KWINPKG_FILE) \
 -		|| kpackagetool6 -t KWin/Script -i $(KWINPKG_FILE)
-+	kpackagetool6 -g -p $(DESTDIR) -t KWin/Script -i $(KWINPKG_FILE)
++	kpackagetool6 -p $(DESTDIR) -t KWin/Script -i $(KWINPKG_FILE)
  
  uninstall:
  	kpackagetool6 -t kwinscript -r $(PROJECT_NAME)

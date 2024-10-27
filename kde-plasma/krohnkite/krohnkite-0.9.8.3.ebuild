@@ -5,7 +5,7 @@ EAPI=8
 
 DESCRIPTION="A dynamic tiling extension for KWin"
 HOMEPAGE="https://github.com/anametologin/krohnkite"
-SRC_URI="https://github.com/anametologin/krohnkite/archive/refs/tags/${PV}.tar.gz"
+SRC_URI="https://github.com/anametologin/krohnkite/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"

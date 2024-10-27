@@ -5,7 +5,7 @@ EAPI=8
 
 DESCRIPTION="A krunner plugin to copy keepassxc entries to clipboard"
 HOMEPAGE="https://github.com/naglfar/krunner-keepassxc"
-SRC_URI="https://github.com/naglfar/krunner-keepassxc/archive/refs/tags/${PV}.tar.gz"
+SRC_URI="https://github.com/naglfar/krunner-keepassxc/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"

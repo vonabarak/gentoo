@@ -9,7 +9,7 @@ inherit distutils-r1
 
 DESCRIPTION="Python module for accessing XDG Base Directory paths"
 HOMEPAGE="https://github.com/srstevenson/xdg-base-dirs"
-SRC_URI="https://github.com/srstevenson/xdg-base-dirs/archive/refs/tags/${PV}.tar.gz"
+SRC_URI="https://github.com/srstevenson/xdg-base-dirs/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="ISC"
 SLOT="0"
