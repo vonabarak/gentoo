@@ -16,7 +16,7 @@ IUSE="vaapi"
 
 RDEPEND="
 	media-video/ffmpeg
-	dev-python/QtPy
+	dev-python/qtpy
 	x11-libs/libX11
 	vaapi? ( media-video/ffmpeg[vaapi] )
 "
