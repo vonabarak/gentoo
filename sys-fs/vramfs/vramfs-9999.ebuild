@@ -18,7 +18,7 @@ RDEPEND="
 	virtual/opencl
 "
 BDEPEND="
-	dev-libs/clhpp
+	dev-cpp/clhpp
 	dev-util/opencl-headers
 	virtual/pkgconfig
 "
