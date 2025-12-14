@@ -1,0 +1,17 @@
+Remove PKCS#11 header download step from build.
+Headers are provided by the ebuild during src_prepare phase.
+
+--- a/build.zig
++++ b/build.zig
+@@ -40,11 +40,7 @@
+         .use_lld = target.result.os.tag != .macos,
+     });
+ 
+-    const header_file_step = checkPkcs11Headers(b);
+-    lib.step.dependOn(header_file_step);
+-
+     const lib_test = b.addTest(.{ .root_module = mod });
+-    lib_test.step.dependOn(header_file_step);
+ 
+     lib.addIncludePath(b.path("include"));
+     lib_test.addIncludePath(b.path("include"));
