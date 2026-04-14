@@ -14,15 +14,19 @@ SRC_URI="https://github.com/vonabarak/${MY_PN}/releases/download/v${PV}/${MY_PN}
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="amd64"
-IUSE="bash-completion fish-completion systemd zsh-completion"
+IUSE="bash-completion fish-completion systemd vde zsh-completion"
 
 RDEPEND="
-	app-emulation/qemu
+	app-emulation/qemu[vde?]
 	net-dns/dnsmasq
 	net-firewall/nftables
 	net-misc/passt
 	dev-db/postgresql
 	app-emulation/virtiofsd
+	net-misc/curl
+	app-cdr/cdrtools
+	vde? ( net-misc/vde )
+	|| ( sys-firmware/edk2-bin sys-firmware/edk2 )
 "
 
 S="${WORKDIR}"
@@ -55,8 +59,6 @@ src_install() {
 		insinto /usr/share/fish/vendor_completions.d
 		doins crv.fish
 	fi
-
-	dodoc example-apply.yml
 }
 
 pkg_postinst() {

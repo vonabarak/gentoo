@@ -19,5 +19,6 @@
 		<flag name="bash-completion">Install bash shell completion for crv CLI</flag>
 		<flag name="zsh-completion">Install zsh shell completion for crv CLI</flag>
 		<flag name="fish-completion">Install fish shell completion for crv CLI</flag>
+		<flag name="vde">Enable VDE virtual switch support for host-VM networking</flag>
 	</use>
 </pkgmetadata>
