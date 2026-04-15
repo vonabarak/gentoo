@@ -3,28 +3,22 @@
 
 EAPI=8
 
-# Corvus is a Stack project, but hpack generates a standard corvus.cabal
-# file that is checked into the source tarball. The haskell-cabal eclass
-# builds the package with cabal-install like any other Haskell package:
-# dependencies come from the ::haskell overlay, the network sandbox stays
-# on, and profiling/haddock/etc. work as usual.
+# Live ebuild: pulls the latest main branch from GitHub at every emerge.
+# Set EGIT_OVERRIDE_BRANCH_VONABARAK_CORVUS / EGIT_COMMIT_VONABARAK_CORVUS
+# to pin to a specific branch or commit.
 
 CABAL_FEATURES="lib profile"
-inherit bash-completion-r1 haskell-cabal
-
-# Strip fourmolu from the cabal build-depends: it is listed in
-# package.yaml but never imported anywhere (only used as a CLI formatter
-# tool via `make format`), and dev-haskell/fourmolu is masked in the
-# haskell overlay. The stripping is done in src_prepare below.
+inherit bash-completion-r1 haskell-cabal git-r3
 
 DESCRIPTION="QEMU/KVM virtual machine management daemon with CLI client"
 HOMEPAGE="https://github.com/vonabarak/corvus"
-SRC_URI="https://github.com/vonabarak/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+EGIT_REPO_URI="https://github.com/vonabarak/corvus.git"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS=""
 IUSE="bash-completion fish-completion systemd vde zsh-completion"
+PROPERTIES="live"
 
 # Runtime dependencies: external tools the daemon invokes at runtime.
 # !!app-emulation/corvus-bin blocks the binary package (same files).
@@ -42,11 +36,7 @@ RDEPEND="
 	|| ( sys-firmware/edk2-bin sys-firmware/edk2 )
 "
 
-# Haskell library dependencies. Versions reflect what is available in the
-# ::haskell overlay; upper bounds are relaxed so cabal picks whatever is
-# installed. binary, bytestring, containers, directory, filepath, process,
-# template-haskell, time, and unix are GHC boot libraries provided by
-# dev-lang/ghc -- no separate packages needed.
+# Haskell library dependencies, same as the stable ebuild.
 HASKELL_DEPEND="
 	>=dev-haskell/aeson-2.2:=[profile?]
 	>=dev-haskell/aeson-qq-0.8:=[profile?]
@@ -81,8 +71,15 @@ DEPEND="${RDEPEND}
 
 RDEPEND+=" ${HASKELL_DEPEND}"
 
+src_unpack() {
+	git-r3_src_unpack
+}
+
 src_prepare() {
-	# Strip fourmolu from build-depends in the cabal file; see comment above.
+	# Strip fourmolu from build-depends in the cabal file; it is listed in
+	# package.yaml but never imported anywhere (only used as a CLI formatter
+	# tool via `make format`), and dev-haskell/fourmolu is masked in the
+	# haskell overlay.
 	sed -i '/^\s*,\s*fourmolu\s*$/d' "${S}/corvus.cabal" || die
 	haskell-cabal_src_prepare
 }
