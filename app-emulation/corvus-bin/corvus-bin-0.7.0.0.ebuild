@@ -17,6 +17,7 @@ KEYWORDS="amd64"
 IUSE="bash-completion fish-completion systemd vde zsh-completion"
 
 RDEPEND="
+	!!app-emulation/corvus
 	app-emulation/qemu[vde?]
 	net-dns/dnsmasq
 	net-firewall/nftables
