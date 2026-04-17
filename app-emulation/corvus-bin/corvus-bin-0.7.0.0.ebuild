@@ -18,7 +18,7 @@ IUSE="bash-completion fish-completion systemd vde zsh-completion"
 
 RDEPEND="
 	!!app-emulation/corvus
-	app-emulation/qemu[vde?]
+	app-emulation/qemu[spice,usb,usbredir,virtfs,passt,vde?]
 	net-dns/dnsmasq
 	net-firewall/nftables
 	net-misc/passt

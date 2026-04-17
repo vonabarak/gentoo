@@ -30,7 +30,7 @@ IUSE="bash-completion fish-completion systemd vde zsh-completion"
 # !!app-emulation/corvus-bin blocks the binary package (same files).
 RDEPEND="
 	!!app-emulation/corvus-bin
-	app-emulation/qemu[vde?]
+	app-emulation/qemu[spice,usb,usbredir,virtfs,passt,vde?]
 	net-dns/dnsmasq
 	net-firewall/nftables
 	net-misc/passt
