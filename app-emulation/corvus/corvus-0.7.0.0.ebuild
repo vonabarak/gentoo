@@ -54,6 +54,7 @@ HASKELL_DEPEND="
 	>=dev-haskell/base64-bytestring-1.2:=[profile?]
 	>=dev-haskell/esqueleto-3.5:=[profile?]
 	>=dev-haskell/exceptions-0.10:=[profile?]
+	>=dev-haskell/gitrev-1.3:=[profile?]
 	>=dev-haskell/haskell-src-meta-0.8:=[profile?]
 	>=dev-haskell/monad-logger-0.3:=[profile?]
 	>=dev-haskell/mtl-2.3:=[profile?]
