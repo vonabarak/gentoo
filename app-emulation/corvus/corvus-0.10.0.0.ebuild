@@ -3,9 +3,11 @@
 
 EAPI=8
 
-# Live ebuild: pulls the latest main branch from GitHub at every emerge.
-# Set EGIT_OVERRIDE_BRANCH_VONABARAK_CORVUS / EGIT_COMMIT_VONABARAK_CORVUS
-# to pin to a specific branch or commit.
+# Corvus is a Stack project, but hpack generates a standard corvus.cabal
+# file that is checked into the source tarball. The haskell-cabal eclass
+# builds the package with cabal-install like any other Haskell package:
+# dependencies come from the ::haskell overlay, the network sandbox stays
+# on, and profiling/haddock/etc. work as usual.
 #
 # The Cap'n Proto Haskell binding (`capnp`) and `lifetimes` are vendored
 # under `vendor/haskell-capnp/capnp/` and `vendor/lifetimes/`. Upstream
@@ -13,21 +15,24 @@ EAPI=8
 # copies carry GHC 9.8 / LTS-23.28 compatibility patches. We build them
 # before corvus into a private package DB (${T}/vendor-pkg-db) and point
 # corvus's configure at that DB via CABAL_EXTRA_CONFIGURE_FLAGS.
+#
+# Optional Python client (USE=python) installs the pure-Python
+# `corvus_client` package (speaks Cap'n Proto RPC via pycapnp) into
+# every enabled Python impl's site-packages.
 
 PYTHON_COMPAT=( python3_{10..14} )
 
 CABAL_FEATURES="lib profile"
-inherit bash-completion-r1 haskell-cabal git-r3 python-r1
+inherit bash-completion-r1 haskell-cabal python-r1
 
 DESCRIPTION="QEMU/KVM virtual machine management daemon with CLI client"
 HOMEPAGE="https://github.com/vonabarak/corvus"
-EGIT_REPO_URI="https://github.com/vonabarak/corvus.git"
+SRC_URI="https://github.com/vonabarak/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 IUSE="bash-completion fish-completion python systemd vde zsh-completion"
-PROPERTIES="live"
 
 REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
 
@@ -52,6 +57,24 @@ RDEPEND="
 	|| ( sys-firmware/edk2-bin sys-firmware/edk2 )
 "
 
+# Haskell library dependencies. Versions reflect what is available in
+# the ::haskell overlay; upper bounds are relaxed so cabal picks
+# whatever is installed. binary, bytestring, containers, directory,
+# filepath, process, template-haskell, time, and unix are GHC boot
+# libraries provided by dev-lang/ghc -- no separate packages needed.
+#
+# `ansi-terminal`, `supervisors`, and `data-default` were added when
+# the wire protocol moved to Cap'n Proto post-0.9. The Cap'n Proto
+# Haskell binding (`capnp`) and `lifetimes` are vendored — do NOT
+# add `dev-haskell/capnp` or `dev-haskell/lifetimes` here.
+#
+# Transitive deps of the vendored packages (bifunctors, bytes,
+# data-default-instances-vector, focus, list-t, monad-stm,
+# pretty-show, primitive, safe-exceptions, stm-containers,
+# wl-pprint-text, zenhack-prelude) need to be visible to the
+# vendored builds; some of those (data-default-instances-vector,
+# monad-stm, supervisors, zenhack-prelude) live in the ::vonabarak
+# overlay because LTS-23.28 doesn't carry them.
 HASKELL_DEPEND="
 	>=dev-haskell/aeson-2.2:=[profile?]
 	>=dev-haskell/aeson-qq-0.8:=[profile?]
@@ -102,13 +125,21 @@ DEPEND="${RDEPEND}
 
 RDEPEND+=" ${HASKELL_DEPEND}"
 
+# Path to the private package DB that holds the vendored Haskell
+# packages. Populated in src_configure, referenced via
+# CABAL_EXTRA_CONFIGURE_FLAGS so corvus's own Setup.hs configure can
+# resolve `capnp` and `lifetimes`.
 CORVUS_VENDOR_DB="${T}/vendor-pkg-db"
 
+# Build + register a vendored Haskell package into ${CORVUS_VENDOR_DB}.
+# Args: $1 = absolute path to the package directory.
 _corvus_build_vendored() {
 	local pkg_dir="$1"
 	local pkg_name="${pkg_dir##*/}"
 	einfo "Building vendored Haskell package: ${pkg_name}"
 
+	# Stock Setup.hs for build-type: Simple. Cabal Setup.hs files
+	# aren't checked into the source tree for these packages.
 	cat > "${pkg_dir}/Setup.hs" <<-EOF || die
 		import Distribution.Simple
 		main = defaultMain
@@ -116,6 +147,9 @@ _corvus_build_vendored() {
 
 	pushd "${pkg_dir}" > /dev/null || die "pushd ${pkg_dir}"
 
+	# --package-db=clear + global keeps the configure honest;
+	# --package-db=${CORVUS_VENDOR_DB} lets the second iteration
+	# (capnp) find the first (lifetimes).
 	runhaskell Setup.hs configure \
 		--package-db=clear \
 		--package-db=global \
@@ -132,19 +166,27 @@ _corvus_build_vendored() {
 	runhaskell Setup.hs build \
 		|| die "build ${pkg_name}"
 
+	# install copies files directly to --prefix (no destdir
+	# indirection so the registered .conf paths match the
+	# on-disk layout) AND registers into the last --package-db
+	# specified at configure time (our private vendor DB).
 	runhaskell Setup.hs install \
 		|| die "install ${pkg_name}"
 
 	popd > /dev/null
 }
 
-src_unpack() {
-	git-r3_src_unpack
-}
-
 src_prepare() {
+	# Strip fourmolu from build-depends in the cabal file: it's
+	# listed in package.yaml but never imported anywhere (only used
+	# as a CLI formatter tool via `make format`), and
+	# dev-haskell/fourmolu is masked in the haskell overlay.
 	sed -i '/^\s*,\s*fourmolu\s*$/d' "${S}/corvus.cabal" || die
 
+	# Widen the vendored capnp's data-default bound: capnp.cabal
+	# pins `^>= 0.7.1` (= >=0.7.1 && <0.8) but the haskell overlay
+	# ships data-default-0.8.0.2 — the API surface the code uses
+	# is unchanged across the 0.7 → 0.8 split.
 	sed -i -E \
 		's/data-default[[:space:]]+\^>=[[:space:]]*0\.7\.1/data-default >=0.7.1 \&\& <1/' \
 		"${S}/vendor/haskell-capnp/capnp/capnp.cabal" || die
@@ -153,15 +195,23 @@ src_prepare() {
 }
 
 src_configure() {
+	# Build the vendored Haskell packages into a private DB.
+	# Order matters: capnp depends on lifetimes.
+	# Note: `ghc-pkg init` takes the DB path as a positional arg.
 	ghc-pkg init "${CORVUS_VENDOR_DB}" || die "init vendor pkg-db"
 	_corvus_build_vendored "${S}/vendor/lifetimes"
 	_corvus_build_vendored "${S}/vendor/haskell-capnp/capnp"
 
+	# Point corvus's configure at the private DB so cabal-install
+	# resolves capnp + lifetimes against the vendored builds.
+	#
 	# --disable-executable-dynamic: statically link the vendored
-	# Haskell libs into the corvus / crv binaries. Without it GHC
-	# bakes ${T}/vendor-prefix/lib/... into the binary's rpath
-	# and /usr/bin/crv fails at runtime once that build dir is
-	# gone.
+	# Haskell libs into the corvus / crv binaries. Without this
+	# GHC's default dynamic-link path bakes the build-time
+	# ${T}/vendor-prefix/lib/... rpath into the binaries; that
+	# path is gone after the merge so /usr/bin/crv would die at
+	# runtime with "cannot open shared object file" for
+	# libHScapnp.so. Static linking removes the .so dependency.
 	CABAL_EXTRA_CONFIGURE_FLAGS+=" --package-db=${CORVUS_VENDOR_DB}"
 	CABAL_EXTRA_CONFIGURE_FLAGS+=" --disable-executable-dynamic"
 

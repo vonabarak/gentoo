@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>author@example.com</email>
+		<name>vonabarak</name>
+	</maintainer>
+	<longdescription>
+		pycapnp is a Cython-based binding of the Cap'n Proto C++ library. It
+		provides full Cap'n Proto serialization plus an asyncio-friendly RPC
+		layer, used here as the wire-protocol library for the Corvus client.
+		Links against the system dev-libs/capnproto rather than bundling its
+		own copy.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">capnproto/pycapnp</remote-id>
+		<remote-id type="pypi">pycapnp</remote-id>
+	</upstream>
+</pkgmetadata>

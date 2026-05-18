@@ -24,9 +24,9 @@
 		<flag name="fish-completion">Install fish shell completion for crv CLI</flag>
 		<flag name="vde">Enable VDE virtual switch support for host-VM networking</flag>
 		<flag name="python">
-			Build and install the Python client extension module (corvus_client).
-			The resulting .so uses CPython's stable ABI (abi3, Python 3.10+) and is
-			installed into every enabled PYTHON_TARGETS site-packages.
+			Install the pure-Python corvus_client package (speaks Cap'n Proto
+			RPC via dev-python/pycapnp). Installed into every enabled
+			PYTHON_TARGETS site-packages.
 		</flag>
 	</use>
 </pkgmetadata>
