@@ -36,7 +36,7 @@ KEYWORDS=""
 #
 # At least one of these must be enabled. Shell completions and the
 # Python client library follow their own flags below.
-IUSE="+admin bash-completion +cli +daemon fish-completion +netd +node +python systemd vde zsh-completion"
+IUSE="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde zsh-completion"
 PROPERTIES="live"
 
 REQUIRED_USE="
@@ -227,22 +227,6 @@ src_install() {
 	use netd || rm -f "${ED}/usr/bin/corvus-netd" || die
 	use cli || rm -f "${ED}/usr/bin/crv" || die
 
-	if use systemd; then
-		insinto /usr/lib/systemd/user
-		if use daemon; then
-			sed -i 's|%h/.local/bin/corvus|/usr/bin/corvus|' "${S}/systemd/corvus.service" || die
-			doins "${S}/systemd/corvus.service"
-		fi
-		if use netd; then
-			insinto /usr/lib/systemd/system
-			doins "${S}/systemd/corvus-netd.service"
-		fi
-		if use node; then
-			insinto /usr/lib/systemd/system
-			doins "${S}/systemd/corvus-nodeagent.service"
-		fi
-	fi
-
 	if use cli; then
 		if use bash-completion; then
 			"${ED}/usr/bin/crv" --bash-completion-script /usr/bin/crv \
@@ -286,11 +270,6 @@ pkg_postinst() {
 		elog "Start the daemon:"
 		elog "  corvus --database postgresql://localhost/corvus"
 		elog ""
-		if use systemd; then
-			elog "Or as a systemd user service:"
-			elog "  systemctl --user enable --now corvus.service"
-			elog ""
-		fi
 	fi
 	if use cli; then
 		elog "Manage VMs with the crv CLI:"
@@ -305,7 +284,11 @@ pkg_postinst() {
 	fi
 	if use admin; then
 		elog "corvus-admin manages mTLS certificates for daemon, node, and netd."
-		elog "Initialise a CA with:"
+		elog "For a turn-key single-node setup (CA + certs + systemd units +"
+		elog "service bring-up + node registration), run:"
+		elog "  corvus-admin quickstart"
+		elog ""
+		elog "Or initialise the CA only:"
 		elog "  corvus-admin init"
 		elog ""
 	fi
