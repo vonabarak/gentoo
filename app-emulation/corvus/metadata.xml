@@ -18,7 +18,13 @@
 		<remote-id type="github">vonabarak/corvus</remote-id>
 	</upstream>
 	<use>
-		<flag name="systemd">Install systemd user service file</flag>
+		<flag name="admin">Install the corvus-admin Python CLI for mTLS certificate
+			management (mint, deploy, renew). Requires the python USE flag.</flag>
+		<flag name="cli">Install the crv command-line client</flag>
+		<flag name="daemon">Install the corvus VM management daemon</flag>
+		<flag name="netd">Install the corvus-netd privileged networking agent</flag>
+		<flag name="node">Install the corvus-nodeagent per-host privileged agent</flag>
+		<flag name="systemd">Install systemd service files for enabled components</flag>
 		<flag name="bash-completion">Install bash shell completion for crv CLI</flag>
 		<flag name="zsh-completion">Install zsh shell completion for crv CLI</flag>
 		<flag name="fish-completion">Install fish shell completion for crv CLI</flag>

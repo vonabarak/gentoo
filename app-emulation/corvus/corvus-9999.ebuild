@@ -26,22 +26,46 @@ EGIT_REPO_URI="https://github.com/vonabarak/corvus.git"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS=""
-IUSE="bash-completion fish-completion python systemd vde zsh-completion"
+
+# Component USE flags select which executables to install:
+#   daemon — corvus (VM management daemon)
+#   node   — corvus-nodeagent (per-host privileged agent)
+#   netd   — corvus-netd (per-host network agent)
+#   cli    — crv (command-line client)
+#   admin  — corvus-admin (Python certificate / deploy CLI; needs python)
+#
+# At least one of these must be enabled. Shell completions and the
+# Python client library follow their own flags below.
+IUSE="+admin bash-completion +cli +daemon fish-completion +netd +node +python systemd vde zsh-completion"
 PROPERTIES="live"
 
-REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
+REQUIRED_USE="
+	|| ( admin cli daemon netd node )
+	admin? ( python )
+	python? ( ${PYTHON_REQUIRED_USE} )
+"
 
+# Runtime dependencies per component. The Haskell binaries share a
+# common Haskell library closure (HASKELL_DEPEND, applied at the
+# bottom); only the external system-level deps are component-gated.
 RDEPEND="
 	!!app-emulation/corvus-bin
-	app-emulation/qemu[spice,usb,usbredir,virtfs,passt,vde?]
-	net-dns/dnsmasq
-	net-firewall/nftables
-	net-misc/passt
-	dev-db/postgresql
-	app-emulation/virtiofsd
-	net-misc/curl
-	app-cdr/cdrtools
-	vde? ( net-misc/vde )
+	|| ( sys-firmware/edk2-bin sys-firmware/edk2 )
+	daemon? (
+		dev-db/postgresql
+	)
+	node? (
+		app-emulation/qemu[spice,usb,usbredir,virtfs,passt,vde?]
+		app-emulation/virtiofsd
+		app-cdr/cdrtools
+		net-misc/curl
+	)
+	netd? (
+		net-dns/dnsmasq
+		net-firewall/nftables
+		net-misc/passt
+		vde? ( net-misc/vde )
+	)
 	python? (
 		${PYTHON_DEPS}
 		$(python_gen_cond_dep '
@@ -49,20 +73,28 @@ RDEPEND="
 			dev-python/pyyaml[${PYTHON_USEDEP}]
 		')
 	)
-	|| ( sys-firmware/edk2-bin sys-firmware/edk2 )
+	admin? (
+		$(python_gen_cond_dep '
+			>=dev-python/cryptography-42[${PYTHON_USEDEP}]
+			>=dev-python/click-8[${PYTHON_USEDEP}]
+		')
+	)
 "
 
 HASKELL_DEPEND="
 	>=dev-haskell/aeson-2.2:=[profile?]
 	>=dev-haskell/aeson-qq-0.8:=[profile?]
 	>=dev-haskell/ansi-terminal-1.0:=[profile?]
+	>=dev-haskell/asn1-types-0.3:=[profile?]
 	>=dev-haskell/async-2.2:=[profile?]
 	>=dev-haskell/base64-bytestring-1.2:=[profile?]
 	>=dev-haskell/bifunctors-5.6:=[profile?]
 	>=dev-haskell/bytes-0.17:=[profile?]
+	>=dev-haskell/crypton-x509-1.7:=[profile?]
+	>=dev-haskell/crypton-x509-store-1.6:=[profile?]
+	>=dev-haskell/crypton-x509-validation-1.6:=[profile?]
 	>=dev-haskell/data-default-0.7:=[profile?]
 	>=dev-haskell/data-default-instances-vector-0.0.1:=[profile?]
-	>=dev-haskell/esqueleto-3.5:=[profile?]
 	>=dev-haskell/exceptions-0.10:=[profile?]
 	>=dev-haskell/focus-1.0:=[profile?]
 	>=dev-haskell/gitrev-1.3:=[profile?]
@@ -86,7 +118,7 @@ HASKELL_DEPEND="
 	>=dev-haskell/supervisors-0.2:=[profile?]
 	>=dev-haskell/temporary-1.3:=[profile?]
 	>=dev-haskell/text-2.0:=[profile?]
-	>=dev-haskell/unliftio-core-0.2:=[profile?]
+	>=dev-haskell/tls-2.1:=[profile?]
 	>=dev-haskell/vector-0.13:=[profile?]
 	>=dev-haskell/wl-pprint-text-1.2:=[profile?]
 	>=dev-haskell/yaml-0.11:=[profile?]
@@ -97,7 +129,7 @@ DEPEND="${RDEPEND}
 	${HASKELL_DEPEND}
 	>=dev-lang/ghc-9.4
 	>=dev-haskell/cabal-3.8
-	dev-db/postgresql
+	daemon? ( dev-db/postgresql )
 "
 
 RDEPEND+=" ${HASKELL_DEPEND}"
@@ -143,8 +175,6 @@ src_unpack() {
 }
 
 src_prepare() {
-	sed -i '/^\s*,\s*fourmolu\s*$/d' "${S}/corvus.cabal" || die
-
 	sed -i -E \
 		's/data-default[[:space:]]+\^>=[[:space:]]*0\.7\.1/data-default >=0.7.1 \&\& <1/' \
 		"${S}/vendor/haskell-capnp/capnp/capnp.cabal" || die
@@ -172,37 +202,76 @@ _corvus_install_python_module() {
 	python_domodule "${S}/python/corvus_client"
 }
 
+_corvus_install_admin_module() {
+	python_domodule "${S}/python/corvus_admin"
+}
+
+_corvus_install_admin_wrapper() {
+	cat > "${T}/corvus-admin" <<-'EOF' || die
+		#!/usr/bin/env python3
+		import sys
+		from corvus_admin.cli import main
+		sys.exit(main())
+	EOF
+	python_newscript "${T}/corvus-admin" corvus-admin
+}
+
 src_install() {
 	haskell-cabal_src_install
 
+	# The Haskell build always produces all four binaries (they share
+	# the same library closure). Drop the ones the user didn't ask
+	# for so the install set tracks the enabled USE flags.
+	use daemon || rm -f "${ED}/usr/bin/corvus" || die
+	use node || rm -f "${ED}/usr/bin/corvus-nodeagent" || die
+	use netd || rm -f "${ED}/usr/bin/corvus-netd" || die
+	use cli || rm -f "${ED}/usr/bin/crv" || die
+
 	if use systemd; then
-		sed -i 's|%h/.local/bin/corvus|/usr/bin/corvus|' "${S}/corvus.service" || die
 		insinto /usr/lib/systemd/user
-		doins "${S}/corvus.service"
+		if use daemon; then
+			sed -i 's|%h/.local/bin/corvus|/usr/bin/corvus|' "${S}/systemd/corvus.service" || die
+			doins "${S}/systemd/corvus.service"
+		fi
+		if use netd; then
+			insinto /usr/lib/systemd/system
+			doins "${S}/systemd/corvus-netd.service"
+		fi
+		if use node; then
+			insinto /usr/lib/systemd/system
+			doins "${S}/systemd/corvus-nodeagent.service"
+		fi
 	fi
 
-	if use bash-completion; then
-		"${ED}/usr/bin/crv" --bash-completion-script /usr/bin/crv \
-			> "${T}/crv.bash" || die "Failed to generate bash completion"
-		newbashcomp "${T}/crv.bash" crv
-	fi
+	if use cli; then
+		if use bash-completion; then
+			"${ED}/usr/bin/crv" --bash-completion-script /usr/bin/crv \
+				> "${T}/crv.bash" || die "Failed to generate bash completion"
+			newbashcomp "${T}/crv.bash" crv
+		fi
 
-	if use zsh-completion; then
-		"${ED}/usr/bin/crv" --zsh-completion-script /usr/bin/crv \
-			> "${T}/_crv" || die "Failed to generate zsh completion"
-		insinto /usr/share/zsh/site-functions
-		doins "${T}/_crv"
-	fi
+		if use zsh-completion; then
+			"${ED}/usr/bin/crv" --zsh-completion-script /usr/bin/crv \
+				> "${T}/_crv" || die "Failed to generate zsh completion"
+			insinto /usr/share/zsh/site-functions
+			doins "${T}/_crv"
+		fi
 
-	if use fish-completion; then
-		"${ED}/usr/bin/crv" --fish-completion-script /usr/bin/crv \
-			> "${T}/crv.fish" || die "Failed to generate fish completion"
-		insinto /usr/share/fish/vendor_completions.d
-		doins "${T}/crv.fish"
+		if use fish-completion; then
+			"${ED}/usr/bin/crv" --fish-completion-script /usr/bin/crv \
+				> "${T}/crv.fish" || die "Failed to generate fish completion"
+			insinto /usr/share/fish/vendor_completions.d
+			doins "${T}/crv.fish"
+		fi
 	fi
 
 	if use python; then
 		python_foreach_impl _corvus_install_python_module
+	fi
+
+	if use admin; then
+		python_foreach_impl _corvus_install_admin_module
+		python_foreach_impl _corvus_install_admin_wrapper
 	fi
 
 	dodoc README.md
@@ -210,26 +279,38 @@ src_install() {
 }
 
 pkg_postinst() {
-	elog "Corvus requires a PostgreSQL database."
-	elog "Create one with: createdb corvus"
-	elog ""
-	elog "Start the daemon:"
-	elog "  corvus --database postgresql://localhost/corvus"
-	elog ""
-	if use systemd; then
-		elog "Or as a systemd user service:"
-		elog "  systemctl --user enable --now corvus.service"
+	if use daemon; then
+		elog "Corvus daemon requires a PostgreSQL database."
+		elog "Create one with: createdb corvus"
+		elog ""
+		elog "Start the daemon:"
+		elog "  corvus --database postgresql://localhost/corvus"
+		elog ""
+		if use systemd; then
+			elog "Or as a systemd user service:"
+			elog "  systemctl --user enable --now corvus.service"
+			elog ""
+		fi
+	fi
+	if use cli; then
+		elog "Manage VMs with the crv CLI:"
+		elog "  crv vm list"
+		elog "  crv disk list"
 		elog ""
 	fi
-	elog "Manage VMs with the crv CLI:"
-	elog "  crv vm list"
-	elog "  crv disk list"
-	elog ""
 	if use python; then
 		elog "Python client module is installed; use it from Python with:"
 		elog "  from corvus_client import Client"
 		elog ""
 	fi
-	elog "User namespaces must be enabled in the kernel (CONFIG_USER_NS=y)"
-	elog "for unprivileged virtual networking."
+	if use admin; then
+		elog "corvus-admin manages mTLS certificates for daemon, node, and netd."
+		elog "Initialise a CA with:"
+		elog "  corvus-admin init"
+		elog ""
+	fi
+	if use node || use netd; then
+		elog "User namespaces must be enabled in the kernel (CONFIG_USER_NS=y)"
+		elog "for unprivileged virtual networking."
+	fi
 }
