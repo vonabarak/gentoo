@@ -256,6 +256,32 @@ src_install() {
 	if use admin; then
 		python_foreach_impl _corvus_install_admin_module
 		python_foreach_impl _corvus_install_admin_wrapper
+
+		# Generate completion scripts off the source tree. Output is
+		# pure shell so it does not depend on which Python impl we
+		# pick; python_setup grabs any one of the enabled ones.
+		if use bash-completion || use zsh-completion || use fish-completion; then
+			python_setup
+			if use bash-completion; then
+				PYTHONPATH="${S}/python" "${EPYTHON}" -m corvus_admin completion bash \
+					> "${T}/corvus-admin.bash" || die "Failed to generate bash completion"
+				newbashcomp "${T}/corvus-admin.bash" corvus-admin
+			fi
+
+			if use zsh-completion; then
+				PYTHONPATH="${S}/python" "${EPYTHON}" -m corvus_admin completion zsh \
+					> "${T}/_corvus-admin" || die "Failed to generate zsh completion"
+				insinto /usr/share/zsh/site-functions
+				doins "${T}/_corvus-admin"
+			fi
+
+			if use fish-completion; then
+				PYTHONPATH="${S}/python" "${EPYTHON}" -m corvus_admin completion fish \
+					> "${T}/corvus-admin.fish" || die "Failed to generate fish completion"
+				insinto /usr/share/fish/vendor_completions.d
+				doins "${T}/corvus-admin.fish"
+			fi
+		fi
 	fi
 
 	dodoc README.md
