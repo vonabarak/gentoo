@@ -33,5 +33,10 @@
 			RPC via dev-python/pycapnp). Installed into every enabled
 			PYTHON_TARGETS site-packages.
 		</flag>
+		<flag name="web">
+			Install the corvus-web HTTP/WebSocket gateway (FastAPI + uvicorn)
+			and build the bundled React SPA. Requires Node.js + npm at build
+			time and the python USE flag at runtime.
+		</flag>
 	</use>
 </pkgmetadata>

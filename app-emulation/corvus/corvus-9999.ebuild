@@ -33,15 +33,24 @@ KEYWORDS=""
 #   netd   — corvus-netd (per-host network agent)
 #   cli    — crv (command-line client)
 #   admin  — corvus-admin (Python certificate / deploy CLI; needs python)
+#   web    — corvus-web (FastAPI/uvicorn HTTP+WS gateway, ships the
+#            React SPA built with npm; needs python)
 #
 # At least one of these must be enabled. Shell completions and the
 # Python client library follow their own flags below.
-IUSE="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde zsh-completion"
+IUSE="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde +web zsh-completion"
 PROPERTIES="live"
 
+# The web frontend is built with `npm ci && npm run build`, which
+# fetches packages from the npm registry — the Portage network
+# sandbox would block that. Live-ebuild semantics already require
+# network for git-r3, so this is consistent.
+RESTRICT="web? ( network-sandbox )"
+
 REQUIRED_USE="
-	|| ( admin cli daemon netd node )
+	|| ( admin cli daemon netd node web )
 	admin? ( python )
+	web? ( python )
 	python? ( ${PYTHON_REQUIRED_USE} )
 "
 
@@ -77,6 +86,14 @@ RDEPEND="
 		$(python_gen_cond_dep '
 			>=dev-python/cryptography-42[${PYTHON_USEDEP}]
 			>=dev-python/click-8[${PYTHON_USEDEP}]
+		')
+	)
+	web? (
+		$(python_gen_cond_dep '
+			>=dev-python/fastapi-0.115[${PYTHON_USEDEP}]
+			>=dev-python/uvicorn-0.30[${PYTHON_USEDEP}]
+			>=dev-python/prometheus-client-0.20[${PYTHON_USEDEP}]
+			dev-python/websockets[${PYTHON_USEDEP}]
 		')
 	)
 "
@@ -131,6 +148,10 @@ DEPEND="${RDEPEND}
 	>=dev-haskell/cabal-3.8
 	daemon? ( dev-db/postgresql )
 "
+
+# Node.js + npm is only needed at build time to bundle the SPA into
+# python/corvus_web/static/. Runtime serving is pure Python (uvicorn).
+BDEPEND="web? ( net-libs/nodejs[npm] )"
 
 RDEPEND+=" ${HASKELL_DEPEND}"
 
@@ -198,6 +219,18 @@ src_configure() {
 	haskell-cabal_src_configure
 }
 
+src_compile() {
+	haskell-cabal_src_compile
+
+	if use web; then
+		# `make web-build` runs `npm ci` (or `npm install` if the
+		# lockfile is stale) followed by `npm run build`, then
+		# copies frontend/dist/ into python/corvus_web/static/ —
+		# which is where corvus_web.config locates the SPA bundle.
+		emake web-build NPM=npm
+	fi
+}
+
 _corvus_install_python_module() {
 	python_domodule "${S}/python/corvus_client"
 }
@@ -214,6 +247,23 @@ _corvus_install_admin_wrapper() {
 		sys.exit(main())
 	EOF
 	python_newscript "${T}/corvus-admin" corvus-admin
+}
+
+_corvus_install_web_module() {
+	# Ships the SPA bundle alongside the Python sources because
+	# corvus_web.config locates static assets via
+	# Path(__file__).parent / "static".
+	python_domodule "${S}/python/corvus_web"
+}
+
+_corvus_install_web_wrapper() {
+	cat > "${T}/corvus-web" <<-'EOF' || die
+		#!/usr/bin/env python3
+		import sys
+		from corvus_web.cli import main
+		sys.exit(main())
+	EOF
+	python_newscript "${T}/corvus-web" corvus-web
 }
 
 src_install() {
@@ -251,6 +301,11 @@ src_install() {
 
 	if use python; then
 		python_foreach_impl _corvus_install_python_module
+	fi
+
+	if use web; then
+		python_foreach_impl _corvus_install_web_module
+		python_foreach_impl _corvus_install_web_wrapper
 	fi
 
 	if use admin; then
@@ -306,6 +361,12 @@ pkg_postinst() {
 	if use python; then
 		elog "Python client module is installed; use it from Python with:"
 		elog "  from corvus_client import Client"
+		elog ""
+	fi
+	if use web; then
+		elog "corvus-web serves a browser UI plus a REST + WebSocket bridge"
+		elog "in front of the corvus daemon (defaults to http://127.0.0.1:8080):"
+		elog "  corvus-web"
 		elog ""
 	fi
 	if use admin; then
