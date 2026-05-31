@@ -232,7 +232,20 @@ src_compile() {
 }
 
 _corvus_install_python_module() {
-	python_domodule "${S}/python/corvus_client"
+	# python/corvus_client/schema is a directory symlink to ../../schema
+	# so the live Python client and the wheel both see the canonical
+	# .capnp files. python_domodule preserves symlinks (it's doins
+	# underneath), which would leave a dangling
+	# /usr/lib/pythonX.Y/site-packages/corvus_client/schema in the
+	# install — at import time corvus_client/_schema.py errors out
+	# with "schema directory not found". Stage a dereferenced copy
+	# (cp -rL) and install from that so the schema files ship as a
+	# real directory.
+	local stage="${T}/python-stage-${EPYTHON}"
+	rm -rf "${stage}" || die
+	mkdir -p "${stage}" || die
+	cp -rL "${S}/python/corvus_client" "${stage}/corvus_client" || die
+	python_domodule "${stage}/corvus_client"
 }
 
 _corvus_install_admin_module() {
