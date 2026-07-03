@@ -72,6 +72,7 @@ _CORVUS_DB_BACKENDS="+postgres +sqlite"
 REQUIRED_USE="
 	|| ( admin cli daemon netd node web )
 	|| ( postgres sqlite )
+	binary? ( postgres sqlite )
 	admin? ( python )
 	web? ( python )
 	python? ( ${PYTHON_REQUIRED_USE} )
