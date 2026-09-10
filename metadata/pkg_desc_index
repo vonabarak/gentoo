@@ -1,0 +1,22 @@
+app-crypt/acsccid 1.1.11: Driver for ACS CCID smart card readers
+app-crypt/srb-id-pkcs11 9999: Open-source PKCS#11 module for Serbian ID smart cards (Gemalto)
+app-emulation/corvus 0.12.0.0 0.13.0.0 0.14.0.0 9999: QEMU/KVM virtual machine management daemon with CLI client
+dev-haskell/data-default-instances-vector 0.0.1: Default instances for Data.Vector
+dev-haskell/monad-stm 0.1.0.2: STM in a MonadIO-friendly wrapper
+dev-haskell/supervisors 0.2.1.0: Structured concurrency supervisor trees
+dev-haskell/zenhack-prelude 0.1.1.0: zenhack's personal Prelude (re-exports)
+dev-lang/python 2.7.18_p16-r1 3.6.15 3.7.16 3.8.16_p4 3.9.16_p3: An interpreted, interactive, object-oriented programming language
+dev-python/fastapi 0.136.3: FastAPI framework, high performance, easy to learn, ready for production
+dev-python/pycapnp 2.2.2: Python wrapper for the Cap'n Proto C++ library
+dev-python/pykeepass 4.0.7: Python library to interact with keepass databases (supports KDBX3 and KDBX4)
+dev-python/xdg-base-dirs 6.0.2: Python module for accessing XDG Base Directory paths
+kde-plasma/bismuth-window-decoration 9999: Bismuth window decoration for Plasma/KWin 6
+kde-plasma/krohnkite 0.9.8.3: A dynamic tiling extension for KWin
+kde-plasma/krunner-kdbx 9999: KRunner plugin for KDBX database (KeePass/KeePassXC)
+kde-plasma/krunner-keepassxc 1.8.3: A krunner plugin to copy keepassxc entries to clipboard
+kde-plasma/window-title-applet 0.9.0 9999: KDE Plasma 6 Window Title Applet
+media-video/screencaster 9999: A small utility to grab the X11 screen using ffmpeg
+net-vpn/cloudflare-warp 2025.4.943.0 2025.5.893.0 2025.8.779.0: Cloudflare Warp Client
+sys-auth/pam-keepassxc 9999: PAM module for auto-unlocking KeePassXC
+sys-fs/vramfs 9999: VRAM-based filesystem for Linux
+www-misc/vdhcoapp-bin 1.6.3: Companion application for Video DownloadHelper browser add-on
