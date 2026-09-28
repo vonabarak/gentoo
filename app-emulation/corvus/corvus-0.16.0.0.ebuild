@@ -66,12 +66,13 @@ SLOT="0"
 #
 # At least one of these must be enabled. Shell completions and the
 # Python client library follow their own flags below.
-_CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde +virtiofs +tpm +web zsh-completion"
+_CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde +virtfs +tpm +web zsh-completion"
 _CORVUS_DB_BACKENDS="+postgres +sqlite"
 
 REQUIRED_USE="
 	|| ( admin cli daemon netd node web )
 	|| ( postgres sqlite )
+	binary? ( postgres sqlite )
 	admin? ( python )
 	web? ( python )
 	python? ( ${PYTHON_REQUIRED_USE} )
@@ -87,8 +88,8 @@ COMMON_RDEPEND="
 		sqlite? ( dev-db/sqlite:3= )
 	)
 	node? (
-		app-emulation/qemu[spice,usb,usbredir,virtfs,passt,vde?]
-		virtiofs? ( app-emulation/virtiofsd )
+		app-emulation/qemu[spice,usb,usbredir,virtfs?,passt,vde?]
+		virtfs? ( app-emulation/virtiofsd )
 		tpm? ( app-crypt/swtpm )
 		app-cdr/cdrtools
 		net-misc/curl
