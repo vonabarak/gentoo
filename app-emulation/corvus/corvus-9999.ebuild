@@ -66,7 +66,7 @@ SLOT="0"
 #
 # At least one of these must be enabled. Shell completions and the
 # Python client library follow their own flags below.
-_CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde +virtiofs +tpm +web zsh-completion"
+_CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde +virtfs +tpm +web zsh-completion"
 _CORVUS_DB_BACKENDS="+postgres +sqlite"
 
 REQUIRED_USE="
@@ -87,8 +87,8 @@ COMMON_RDEPEND="
 		sqlite? ( dev-db/sqlite:3= )
 	)
 	node? (
-		app-emulation/qemu[spice,usb,usbredir,virtfs,passt,vde?]
-		virtiofs? ( app-emulation/virtiofsd )
+		app-emulation/qemu[spice,usb,usbredir,virtfs?,passt,vde?]
+		virtfs? ( app-emulation/virtiofsd )
 		tpm? ( app-crypt/swtpm )
 		app-cdr/cdrtools
 		net-misc/curl
@@ -96,7 +96,6 @@ COMMON_RDEPEND="
 	netd? (
 		net-dns/dnsmasq
 		net-firewall/nftables
-		net-misc/passt
 		vde? ( net-misc/vde )
 	)
 	python? (
@@ -618,9 +617,5 @@ pkg_postinst() {
 		elog "Or initialise the CA only:"
 		elog "  corvus-admin init"
 		elog ""
-	fi
-	if use node || use netd; then
-		elog "User namespaces must be enabled in the kernel (CONFIG_USER_NS=y)"
-		elog "for unprivileged virtual networking."
 	fi
 }
