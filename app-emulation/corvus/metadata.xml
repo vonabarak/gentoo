@@ -36,6 +36,8 @@
 		<flag name="zsh-completion">Install zsh shell completion for crv CLI</flag>
 		<flag name="fish-completion">Install fish shell completion for crv CLI</flag>
 		<flag name="vde">Enable VDE virtual switch support for host-VM networking</flag>
+		<flag name="webdav">Require SPICE client WebDAV support for sharing local
+			directories with guests through a native SPICE viewer.</flag>
 		<flag name="python">
 			Install the pure-Python corvus_client package (speaks Cap'n Proto
 			RPC via dev-python/pycapnp). Installed into every enabled
