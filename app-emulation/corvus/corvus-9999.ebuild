@@ -81,8 +81,14 @@ REQUIRED_USE="
 # Haskell library closure (HASKELL_DEPEND) is appended per-variant
 # below; only source builds need it.
 # SPICE viewers need spice-gtk's WebDAV support for directory sharing;
-# without it, remote-viewer's "Share folder" checkbox is disabled.
+# both Remmina and remote-viewer use it for client-local folder sharing.
 COMMON_RDEPEND="
+	cli? (
+		|| (
+			net-misc/remmina[crypt,spice]
+			app-emulation/virt-viewer[spice]
+		)
+	)
 	|| ( sys-firmware/edk2-bin sys-firmware/edk2 )
 	webdav? ( net-misc/spice-gtk[webdav] )
 	daemon? (
