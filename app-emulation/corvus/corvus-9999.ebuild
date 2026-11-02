@@ -66,7 +66,7 @@ SLOT="0"
 #
 # At least one of these must be enabled. Shell completions and the
 # Python client library follow their own flags below.
-_CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde +virtfs +tpm +web webdav zsh-completion"
+_CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python spice vde +virtfs +tpm +web webdav zsh-completion"
 _CORVUS_DB_BACKENDS="+postgres +sqlite"
 
 REQUIRED_USE="
@@ -83,7 +83,7 @@ REQUIRED_USE="
 # SPICE viewers need spice-gtk's WebDAV support for directory sharing;
 # both Remmina and remote-viewer use it for client-local folder sharing.
 COMMON_RDEPEND="
-	cli? (
+	spice? (
 		|| (
 			net-misc/remmina[crypt,spice]
 			app-emulation/virt-viewer[spice]
