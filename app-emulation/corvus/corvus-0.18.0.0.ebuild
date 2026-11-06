@@ -66,13 +66,12 @@ SLOT="0"
 #
 # At least one of these must be enabled. Shell completions and the
 # Python client library follow their own flags below.
-_CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python vde +virtfs +tpm +web zsh-completion"
+_CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python spice vde +virtfs +tpm +web webdav zsh-completion"
 _CORVUS_DB_BACKENDS="+postgres +sqlite"
 
 REQUIRED_USE="
 	|| ( admin cli daemon netd node web )
 	|| ( postgres sqlite )
-	binary? ( postgres sqlite )
 	admin? ( python )
 	web? ( python )
 	python? ( ${PYTHON_REQUIRED_USE} )
@@ -81,8 +80,17 @@ REQUIRED_USE="
 # Runtime dependencies shared by the source and binary variants. The
 # Haskell library closure (HASKELL_DEPEND) is appended per-variant
 # below; only source builds need it.
+# SPICE viewers need spice-gtk's WebDAV support for directory sharing;
+# both Remmina and remote-viewer use it for client-local folder sharing.
 COMMON_RDEPEND="
+	spice? (
+		|| (
+			net-misc/remmina[crypt,spice]
+			app-emulation/virt-viewer[spice]
+		)
+	)
 	|| ( sys-firmware/edk2-bin sys-firmware/edk2 )
+	webdav? ( net-misc/spice-gtk[webdav] )
 	daemon? (
 		postgres? ( dev-db/postgresql )
 		sqlite? ( dev-db/sqlite:3= )
