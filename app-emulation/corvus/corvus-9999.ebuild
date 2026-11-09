@@ -23,11 +23,13 @@ EAPI=8
 # `use binary`, and the fresh RDEPEND/DEPEND assignments below
 # clobber the eclass's auto-injected dev-lang/ghc dependency).
 #
-# The Cap'n Proto Haskell binding (`capnp`) and `lifetimes` are
-# vendored under `vendor/haskell-capnp/capnp/` and `vendor/lifetimes/`.
+# The Cap'n Proto Haskell binding (`capnp`), `lifetimes`, and `supervisors`
+# are vendored under `vendor/haskell-capnp/capnp/`, `vendor/lifetimes/`,
+# and `vendor/supervisors/`.
 # Upstream `zenhack/haskell-capnp` is unmaintained since 2023-06; the
-# in-tree copies carry GHC 9.8 / LTS-23.28 compatibility patches. We
-# build them before corvus into a private package DB
+# in-tree copies carry GHC 9.8 / LTS-23.28 compatibility patches.
+# Supervisors carries Corvus's worker teardown and reporting changes.
+# We build them before corvus into a private package DB
 # (${T}/vendor-pkg-db) and point corvus's configure at that DB via
 # CABAL_EXTRA_CONFIGURE_FLAGS.
 
@@ -39,7 +41,7 @@ PYTHON_COMPAT=( python3_{10..14} )
 # RDEPEND assignment — which would drag the GHC toolchain into the
 # prebuilt (binary) install, defeating the point of it. We instead
 # add dev-lang/ghc to the source-only RDEPEND by hand below. Profiling
-# was effectively unusable anyway: the vendored capnp / lifetimes are
+# was effectively unusable anyway: the vendored Haskell packages are
 # built without profiling libs.
 CABAL_FEATURES="lib"
 if [[ ${PV} == 9999 ]]; then
@@ -164,7 +166,6 @@ HASKELL_DEPEND="
 	>=dev-haskell/safe-exceptions-0.1.7:=
 	>=dev-haskell/stm-2.5:=
 	>=dev-haskell/stm-containers-1.2:=
-	>=dev-haskell/supervisors-0.2:=
 	>=dev-haskell/temporary-1.3:=
 	>=dev-haskell/text-2.0:=
 	>=dev-haskell/tls-2.1:=
@@ -261,7 +262,7 @@ _corvus_build_vendored() {
 	local pkg_name="${pkg_dir##*/}"
 	einfo "Building vendored Haskell package: ${pkg_name}"
 
-	# Stock Setup.hs for build-type: Simple. The vendored packages
+	# Stock Setup.hs for build-type: Simple, including packages that
 	# don't ship one.
 	cat > "${pkg_dir}/Setup.hs" <<-EOF || die
 		import Distribution.Simple
@@ -271,8 +272,8 @@ _corvus_build_vendored() {
 	pushd "${pkg_dir}" > /dev/null || die "pushd ${pkg_dir}"
 
 	# --package-db=clear + global keeps the configure honest;
-	# --package-db=${CORVUS_VENDOR_DB} lets the second iteration
-	# (capnp) find the first (lifetimes).
+	# --package-db=${CORVUS_VENDOR_DB} lets capnp find the previously
+	# built lifetimes and patched supervisors packages.
 	runhaskell Setup.hs configure \
 		--package-db=clear \
 		--package-db=global \
@@ -412,13 +413,15 @@ src_configure() {
 	_corvus_is_binary && return
 
 	# Build the vendored Haskell packages into a private DB. Order
-	# matters: capnp depends on lifetimes.
+	# matters: capnp depends on lifetimes and supervisors. Build the
+	# patched supervisors first so capnp also links against that copy.
 	ghc-pkg init "${CORVUS_VENDOR_DB}" || die "init vendor pkg-db"
+	_corvus_build_vendored "${S}/vendor/supervisors"
 	_corvus_build_vendored "${S}/vendor/lifetimes"
 	_corvus_build_vendored "${S}/vendor/haskell-capnp/capnp"
 
 	# Point corvus's configure at the private DB so cabal-install
-	# resolves capnp + lifetimes against the vendored builds.
+	# resolves capnp, lifetimes, and supervisors against the vendored builds.
 	#
 	# --disable-executable-dynamic: statically link the vendored Haskell
 	# libs into the corvus / crv binaries. Without it GHC bakes the
