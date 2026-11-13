@@ -133,18 +133,21 @@ COMMON_RDEPEND="
 	)
 "
 
+# Keep the crypto stack in LTS-23.28's memory/asn1-types API family.
+# Newer crypton and X.509 releases use incompatible ram/crypton-asn1-types.
 HASKELL_DEPEND="
 	>=dev-haskell/aeson-2.2:=
 	>=dev-haskell/aeson-qq-0.8:=
 	>=dev-haskell/ansi-terminal-1.0:=
-	>=dev-haskell/asn1-types-0.3:=
+	>=dev-haskell/asn1-types-0.3.4:= <dev-haskell/asn1-types-0.4:=
 	>=dev-haskell/async-2.2:=
 	>=dev-haskell/base64-bytestring-1.2:=
 	>=dev-haskell/bifunctors-5.6:=
 	>=dev-haskell/bytes-0.17:=
-	>=dev-haskell/crypton-x509-1.7:=
-	>=dev-haskell/crypton-x509-store-1.6:=
-	>=dev-haskell/crypton-x509-validation-1.6:=
+	>=dev-haskell/crypton-1.0.4:= <dev-haskell/crypton-1.1:=
+	>=dev-haskell/crypton-x509-1.7.5:= <dev-haskell/crypton-x509-1.8:=
+	>=dev-haskell/crypton-x509-store-1.6:= <dev-haskell/crypton-x509-store-1.7:=
+	>=dev-haskell/crypton-x509-validation-1.6.14:= <dev-haskell/crypton-x509-validation-1.7:=
 	>=dev-haskell/data-default-0.7:=
 	>=dev-haskell/data-default-instances-vector-0.0.1:=
 	>=dev-haskell/exceptions-0.10:=
@@ -152,6 +155,7 @@ HASKELL_DEPEND="
 	>=dev-haskell/gitrev-1.3:=
 	>=dev-haskell/haskell-src-meta-0.8:=
 	>=dev-haskell/list-t-1.0:=
+	>=dev-haskell/memory-0.18:= <dev-haskell/memory-0.19:=
 	>=dev-haskell/monad-logger-0.3:=
 	>=dev-haskell/monad-stm-0.1:=
 	>=dev-haskell/mtl-2.3:=
@@ -168,7 +172,7 @@ HASKELL_DEPEND="
 	>=dev-haskell/stm-containers-1.2:=
 	>=dev-haskell/temporary-1.3:=
 	>=dev-haskell/text-2.0:=
-	>=dev-haskell/tls-2.1:=
+	>=dev-haskell/tls-2.1.1:= <dev-haskell/tls-2.2:=
 	>=dev-haskell/vector-0.13:=
 	>=dev-haskell/wl-pprint-text-1.2:=
 	>=dev-haskell/yaml-0.11:=
