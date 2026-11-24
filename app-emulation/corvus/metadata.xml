@@ -40,7 +40,8 @@
 			directories with guests through a native SPICE viewer.</flag>
 		<flag name="python">
 			Install the pure-Python corvus_client package (speaks Cap'n Proto
-			RPC via dev-python/pycapnp). Installed into every enabled
+			RPC via dev-python/pycapnp) and corvus_image_builder package. Both are
+			installed into every enabled
 			PYTHON_TARGETS site-packages.
 		</flag>
 		<flag name="web">

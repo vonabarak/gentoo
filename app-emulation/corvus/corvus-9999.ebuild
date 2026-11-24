@@ -67,7 +67,7 @@ SLOT="0"
 #            the wheel.
 #
 # At least one of these must be enabled. Shell completions and the
-# Python client library follow their own flags below.
+# Python client and image builder libraries follow their own flags below.
 _CORVUS_COMPONENTS="+admin bash-completion +cli +daemon fish-completion +netd +node +python spice vde +virtfs +tpm +web webdav zsh-completion"
 _CORVUS_DB_BACKENDS="+postgres +sqlite"
 
@@ -317,6 +317,7 @@ _corvus_unpack_wheel() {
 _corvus_install_python_module() {
 	if _corvus_is_binary; then
 		python_domodule "${T}/wheel/corvus_client"
+		python_domodule "${T}/wheel/corvus_image_builder"
 	else
 		# python/corvus_client/schema is a directory symlink to
 		# ../../schema so the source client and the wheel both see the
@@ -331,6 +332,7 @@ _corvus_install_python_module() {
 		mkdir -p "${stage}" || die
 		cp -rL "${S}/python/corvus_client" "${stage}/corvus_client" || die
 		python_domodule "${stage}/corvus_client"
+		python_domodule "${S}/python/corvus_image_builder"
 	fi
 }
 
